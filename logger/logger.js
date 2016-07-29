@@ -44,6 +44,7 @@ function getGambar(ip,ipl,logid){
 		var camera  = new MjpegCamera({
 			url 	: 'http://'+ip+':8080/?action=stream'
 		});
+		//camera.start();
 		camera.getScreenshot(function(err,frame){
 			if (err) {
 				console.log({
@@ -55,9 +56,12 @@ function getGambar(ip,ipl,logid){
 					//img = 'camera/'+logid+'-'+data+'.jpg';
 					fs.writeFileSync('camera/'+logid+'-'+data+'.jpg',frame);
 					logger(ipl,'camera/'+logid+'-'+data+'.jpg');
+					camera.start();
+					camera.stop();
 				})
 			}
-		})
+		});
+
 }
 
 function waktu(){
