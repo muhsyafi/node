@@ -9,14 +9,15 @@ var MjpegProxy 	= require('mjpeg-proxy').MjpegProxy;
 
 
 
+
 function jadwal(callback){
 	pool.getConnection(function(err,con){
 		if (err) {
 			console.log({'teks':'Gagal koneksi ke database GIS','err':err});
 		}else{
-			pool.query("select i.loggerid, i.iplogger, i.ipcam, j.jamawal, j.jamakhir from ip i join jadwal j on i.loggerid=j.loggerid ",function(err,row,field){
+			pool.query("select i.loggerid, i.iplogger, i.ipcam, j.jamawal from ip i join jadwal j on i.loggerid=j.loggerid ",function(err,row,field){
 				if (err) {
-					console.log({'teks':'Gagal mengambil data jadwal','err':err});
+					saveLog(err);
 				}else{
 					callback(row);
 				}
@@ -47,10 +48,7 @@ function getGambar(ip,ipl,logid){
 		//camera.start();
 		camera.getScreenshot(function(err,frame){
 			if (err) {
-				console.log({
-					'teks':'Gagal mengambil screenshot',
-					'error':err
-				})
+				saveLog(err);
 			}else{
 				tanggal(function(data){
 					//img = 'camera/'+logid+'-'+data+'.jpg';
@@ -98,28 +96,43 @@ function logger(ip,img){
 			var psi = body.psi_in;
 			pool.getConnection(function(err,con){
 				if (err) {
-					console.log({
-						'teks' : 'Tidak bisa koneksi ke database GIS',
-						'error' : err
-					})
+					saveLog(err);
 				}else{
 					pool.query("insert into datalog_tmp values('',?,?,?,?,?,now())",[loggerid,psi,0,0,img],function(err,row,field){
 						if (err) {
-							console.log({
-								'teks':'Tidak bisa memasukan data ke table datalog_tmp',
-								'error':err
-							})
+							saveLog(err);
 						};
 					})
+					console.log("insert into datalog_tmp values('',"+loggerid+","+psi+","+0+","+0+",'image',now())");
 				}
 				con.release();
 			})
 		}else{
-			console.log({
-				'teks':'Tidak bisa terhubung ke logger '+ip,
-				'error':err
-			});
+			saveLog('Tidak bisa terhubung ke logger '+ip);
 		}
 	});
 }
 ////End function
+
+//Function savelog
+function saveLog(text){
+	pool.getConnection(function(err,con){
+		if (err) {
+			console.log({
+				'teks' : 'Tidak bisa koneksi ke database GIS',
+				'error' : err
+			})
+		}else{
+			pool.query("insert into logs values('',?,now())",[teks],function(err,row,field){
+				if (err) {
+					console.log({
+						'teks':'Tidak bisa memasukan data ke table logs',
+						'error':err
+					})
+				};
+			})
+		}
+		con.release();
+	})	
+}
+//End function save log
