@@ -103,7 +103,6 @@ function logger(ip,img){
 							saveLog(err);
 						};
 					})
-					console.log("insert into datalog_tmp values('',"+loggerid+","+psi+","+0+","+0+",'image',now())");
 				}
 				con.release();
 			})
