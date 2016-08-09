@@ -1,0 +1,224 @@
+<title>GIS Versi 2</title>
+<div id="map_canvas"></div>
+
+<style>
+    body{
+      padding:0px;
+      margin:0px;
+    }
+   #map_canvas {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    position:relative;
+  }
+  #posisi{
+    position:absolute;
+    right:10px;
+    top:10px;
+    padding:5px;
+    background:white;
+    height:35px;
+    width:256px;
+    border-radius:3px;
+    -webkit-box-shadow: 0px 3px 14px -4px rgba(0,0,0,0.4);
+    -moz-box-shadow: 0px 3px 14px -4px rgba(0,0,0,0.4);
+    box-shadow: 0px 3px 14px -4px rgba(0,0,0,0.4);
+  }
+  #cari{
+    position: absolute;
+    top: 10;
+    left: 0;
+    right: 0;
+    margin: auto;
+    z-index: 99;
+    padding:5px;
+    background:white;
+    height:35px;
+    width:512px;
+    border-radius:3px;
+    -webkit-box-shadow: 0px 3px 14px -4px rgba(0,0,0,0.4);
+    -moz-box-shadow: 0px 3px 14px -4px rgba(0,0,0,0.4);
+    box-shadow: 0px 3px 14px -4px rgba(0,0,0,0.4);
+  }
+  #cari #input-cari{
+    position: relative;
+    height: 100%;
+    width: 100%;
+    font-size: 16px;
+    border-left: none;border-right: none;border-top: none;border-bottom: none;
+    padding: 5px;
+  }
+</style>
+<script   src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDaKW1oBMH38CvXlU0LKOA4tdBTa-yKyQY"></script>
+<!-- <script src = "http://maps.googleapis.com/maps/api/js"></script> -->
+<script>
+  var mylocation = {
+    'latitude':  -6.979504,
+    'longitude': 109.853763
+  }; 
+  var map;
+  function initialize() {
+    var myLatlng = new google.maps.LatLng( mylocation.latitude, mylocation.longitude );
+    var mapOptions = {
+      zoom: 15,
+      center: myLatlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    }
+    var map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+    // This needs to be the Full URL - not a relative URL
+
+    google.maps.event.addListener(map, "rightclick", function(event) {
+      var lat = event.latLng.lat();
+      var lng = event.latLng.lng();
+      // populate yor box/field with lat, lng
+      //alert("Lat=" + lat + "; Lng=" + lng);
+      $('#posisi').remove();
+      $('html').append('<div id="posisi">Lat = ' + lat + ' <br> Long = '+ lng+'</div>');
+    });
+
+    var pipa = "http://www.pdambatang.co.id/gis.v.2/pipa.kml";
+    //var sr = "http://pdambatang.co.id/gis.v.2/kml/index.xml";
+    //var kmlPath = "http://googlemaps.github.io/js-v2-samples/ggeoxml/cta.kml";
+    // Add unique number to this url - as with images - to avoid caching issues during development
+    //var urlSuffix = (new Date).getTime().toString();
+    //var layer = new google.maps.KmlLayer({
+    //  url:kmlPath + '?' + urlSuffix,
+    //  suppressInfoWindows: false,
+    //  map: map });
+    var layers = [];
+      layers [0] = new google.maps.KmlLayer(pipa,{
+        preserveViewport: false,
+        suppressInfoWindows:true,
+        map: map
+      });
+
+      //layers [1] = new google.maps.KmlLayer(sr,{
+      //  preserveViewport: false,
+      //  suppressInfoWindows:true,
+      //  map: map
+      //});
+    var bounds = new google.maps.LatLngBounds();
+    $.getJSON('http://pdambatang.co.id/api.gis', function(json, textStatus) {
+          var infoWindow = new google.maps.InfoWindow(), marker, i;
+          
+          // Loop through our array of markers & place each one on the map  
+          for( i = 0; i < json.length; i++ ) {
+              var position = new google.maps.LatLng(json[i].lat, json[i].long);
+              var icon = {
+                url : json[i].icon,
+                size: new google.maps.Size(27, 32),
+                origin: new google.maps.Point(0, 0),
+                anchor: new google.maps.Point(0, 32)
+              }
+              bounds.extend(position);
+              marker = new google.maps.Marker({
+                  position: position,
+                  map: map,
+                  icon :icon,
+                  title: json[i].nosamw
+              });
+              
+              // Allow each marker to have an info window    
+              google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                  return function() {
+                      infoWindow.setContent('<table>'+
+                        '<tr><td>No. Sambung</td><td> : </td><td>'+json[i].nosamw+'</td></tr>'+
+                        '<tr><td>Nama</td><td> : </td><td>'+json[i].nama+'</td></tr>'+
+                        '<tr><td>Alamat</td><td> : </td><td>'+json[i].alamat+'</td></tr>'+
+                        '<tr><td>Status</td><td> : </td><td>'+json[i].stat_smb+'</td></tr>'+
+                        '<tr><td>Golongan</td><td> : </td><td>'+json[i].urjlwp+'</td></tr>'+
+                        '<tr><td colspan="3" style="text-align:center;"><img width="350px" height="auto" src="/upload/gis/'+json[i].foto+'"></td></tr>'+
+                        '</table>');
+                      infoWindow.open(map, marker);
+                  }
+              })(marker, i));
+      
+              // Automatically center the map fitting all markers on the screen
+              map.fitBounds(bounds);
+          }
+    });
+
+    var infoWindow = new google.maps.InfoWindow();
+    
+    function pipaWindow(KMLevent) {
+      infoWindow.close();
+      infoWindow.setOptions(
+        { 
+         //content: KMLevent.featureData.name,
+         content: '<div><h4>'+KMLevent.featureData.name+'</h4><label>'+KMLevent.featureData.snippet+'</label></div>',
+         position: KMLevent.latLng,
+         pixelOffset: KMLevent.pixelOffset
+        });
+      infoWindow.open(map);
+    }
+
+    function srWindow(KMLevent) {
+      infoWindow.close();
+      infoWindow.setOptions(
+        { 
+         //content: KMLevent.featureData.name,
+         content: '<div><h4>'+KMLevent.featureData.name+'</h4><label>'+KMLevent.featureData.snippet+'</label></div>',
+         position: KMLevent.latLng,
+         pixelOffset: KMLevent.pixelOffset
+        });
+      infoWindow.open(map);
+    }
+
+    google.maps.event.addListener(layers[0], "click", pipaWindow);
+    //google.maps.event.addListener(layers[1], "click", srWindow);
+
+    //Add cari
+     $('html').append('<div id="cari"><input type="text" id="input-cari" placeholder="Cari..."></div>');
+     $(document).on('keypress', '#input-cari', function(event) {
+       if (event.keyCode==13) {
+        var id = $(this).val();
+          $.getJSON('/api.gis/cari/'+id, function(json, textStatus) {
+              if (json.length>0 && json[0].lat != null && json[0].long) {
+                tengah(json);
+                infoWindow.setContent('<table>'+
+                     '<tr><td>No. Sambung</td><td> : </td><td>'+json[0].nosamw+'</td></tr>'+
+                     '<tr><td>Nama</td><td> : </td><td>'+json[0].nama+'</td></tr>'+
+                     '<tr><td>Alamat</td><td> : </td><td>'+json[0].alamat+'</td></tr>'+
+                     '<tr><td>Status</td><td> : </td><td>'+json[0].stat_smb+'</td></tr>'+
+                     '<tr><td>Golongan</td><td> : </td><td>'+json[0].urjlwp+'</td></tr>'+
+                     '<tr><td colspan="3" style="text-align:center;"><img width="350px" height="auto" src="/upload/gis/'+json[0].foto+'"></td></tr>'+
+                     '</table>');
+                infoWindow.open(map, marker);
+              };
+          });
+       };
+     });
+    function tengah(json){
+        infoWindow.close();
+        var icon = {
+          url : json[0].icon,
+          size: new google.maps.Size(27, 32),
+          origin: new google.maps.Point(0, 0),
+          anchor: new google.maps.Point(0, 32)
+        }
+        var center = new google.maps.LatLng(json[0].lat,json[0].long);
+        marker = new google.maps.Marker({
+            position: center,
+            map: map,
+            icon:icon
+        });
+        map.panTo(center);
+        map.setZoom(20);
+        infoWindow.setContent('<table>'+
+             '<tr><td>No. Sambung</td><td> : </td><td>'+json[0].nosamw+'</td></tr>'+
+             '<tr><td>Nama</td><td> : </td><td>'+json[0].nama+'</td></tr>'+
+             '<tr><td>Alamat</td><td> : </td><td>'+json[0].alamat+'</td></tr>'+
+             '<tr><td>Status</td><td> : </td><td>'+json[0].stat_smb+'</td></tr>'+
+             '<tr><td>Golongan</td><td> : </td><td>'+json[0].urjlwp+'</td></tr>'+
+             '<tr><td colspan="3" style="text-align:center;"><img width="250px" height="auto" src="'+'/upload/rumah.jpg'+'"></td></tr>'+
+             '</table>');
+        infoWindow.open(map, marker);
+    }
+    //End cari
+  }
+  google.maps.event.addDomListener(window, 'load', initialize);
+</script>
