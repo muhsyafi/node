@@ -6,6 +6,7 @@ var MjpegCamera = require('mjpeg-camera');
 var FileOnWrite = require('file-on-write');
 var pool 		= require('../../api-pdam/core/con').conGis();
 var MjpegProxy 	= require('mjpeg-proxy').MjpegProxy;
+var ping 		= require('ping');
 
 
 
@@ -72,15 +73,20 @@ function waktu(){
 }
 
 
-
 setInterval(function(){
-	jadwal(function(data){ //Get jadwal
-		for (var i = 0; i < data.length; i++) {
-			if (data[i].jamawal==waktu()) {
-				getGambar(data[i].ipcam,data[i].iplogger,data[i].loggerid);
-			};
-		};
-	}); //End get jadwal
+	ping.sys.probe("10.10.1.1",function(hidup){
+		if (hidup==false) {
+			console.log('Koneksi tidak terhubung');
+		}else{
+			jadwal(function(data){ //Get jadwal
+				for (var i = 0; i < data.length; i++) {
+					if (data[i].jamawal==waktu()) {
+						getGambar(data[i].ipcam,data[i].iplogger,data[i].loggerid);
+					};
+				};
+			}); //End get jadwal
+		//}
+	})
 //router.get('/get/cam1',new MjpegProxy('http://cam:123@10.10.1.1:8080/?action=stream').proxyRequest);
 },60*1000);
 
