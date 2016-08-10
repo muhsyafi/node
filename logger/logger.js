@@ -74,19 +74,19 @@ function waktu(){
 
 
 setInterval(function(){
-	ping.sys.probe("10.10.1.1",function(hidup){
-		if (hidup==false) {
-			console.log('Koneksi tidak terhubung');
-		}else{
-			jadwal(function(data){ //Get jadwal
-				for (var i = 0; i < data.length; i++) {
-					if (data[i].jamawal==waktu()) {
+	jadwal(function(data){ //Get jadwal
+		for (var i = 0; i < data.length; i++) {
+			if (data[i].jamawal==waktu()) {
+				ping.sys.probe(data[i].iplogger,function(hidup){
+					if (hidup==false) {
+						console.log(data[i].iplogger+' - Tidak terhubung');
+					}else{
 						getGambar(data[i].ipcam,data[i].iplogger,data[i].loggerid);
-					};
-				};
-			}); //End get jadwal
-		//}
-	})
+					}
+				})
+			};
+		};
+	}); //End get jadwal
 //router.get('/get/cam1',new MjpegProxy('http://cam:123@10.10.1.1:8080/?action=stream').proxyRequest);
 },60*1000);
 
