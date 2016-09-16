@@ -53,8 +53,8 @@ function getGambar(ip,ipl,logid){
 			}else{
 				tanggal(function(data){
 					//img = 'camera/'+logid+'-'+data+'.jpg';
-					fs.writeFileSync('camera/'+logid+'-'+data+'.jpg',frame);
-					logger(ipl,'camera/'+logid+'-'+data+'.jpg');
+					fs.writeFileSync('../api/public/logger/'+logid+'-'+data+'.jpg',frame);
+					logger(ipl,''+logid+'-'+data+'.jpg');
 					camera.start();
 					camera.stop();
 				})
@@ -77,11 +77,14 @@ setInterval(function(){
 	jadwal(function(data){ //Get jadwal
 		for (var i = 0; i < data.length; i++) {
 			if (data[i].jamawal==waktu()) {
-				ping.sys.probe(data[i].iplogger,function(hidup){
+				var ipLog = data[i].iplogger;
+				var ipCam = data[i].ipcam;
+				var logId = data[i].loggerid;
+				ping.sys.probe(ipCam,function(hidup){
 					if (hidup==false) {
-						console.log(data[i].iplogger+' - Tidak terhubung');
+						console.log(ipCam+' - Tidak terhubung');
 					}else{
-						getGambar(data[i].ipcam,data[i].iplogger,data[i].loggerid);
+						getGambar(ipCam,ipLog,logId);
 					}
 				})
 			};
